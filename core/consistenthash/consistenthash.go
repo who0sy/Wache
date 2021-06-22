@@ -19,7 +19,7 @@ type Map struct {
 	HashMap map[int]string
 }
 
-func NewMap(replicas int, fn Hash) *Map {
+func New(replicas int, fn Hash) *Map {
 	m := &Map{
 		replicas: replicas,
 		hash:     fn,
@@ -37,10 +37,23 @@ func (m *Map) Add(keys ...string) {
 		for i := 0; i < m.replicas; i++ {
 			hash := int(m.hash([]byte(strconv.Itoa(i) + key)))
 			m.keys = append(m.keys, hash)
-			m.hashMap[hash] = key
+			m.HashMap[hash] = key
 		}
 	}
 	sort.Ints(m.keys)
+
 }
 
+func (m *Map) Get(key string) string {
+	if len(m.keys) == 0 {
+		return ""
+	}
 
+	hash := int(m.hash([]byte(key)))
+	// 通过二分搜索法寻找第一个匹配的虚拟节点的下标 idx
+	idx := sort.Search(len(m.keys), func(i int) bool {
+		return m.keys[i] >= hash
+	})
+	// 如果 idx == len(m.keys)，说明应选择 m.keys[0]，因为 m.keys 是一个环状结构，所以用取余数的方式来处理这种情况。
+	return m.HashMap[m.keys[idx%len(m.keys)]]
+}
