@@ -2,7 +2,7 @@ package lru
 
 import "container/list"
 
-// LRU缓存结构体，此结构并发访问是不安全的。
+// Cache LRU缓存结构体，此结构并发访问是不安全的。
 type Cache struct {
 	maxBytes  int64                         // 允许使用的最大内存
 	nbytes    int64                         // 已使用的内存量
@@ -17,12 +17,12 @@ type entry struct {
 	value Value // 为了通用性，允许值是实现了 Value 接口的任意类型
 }
 
-//使用Len来计算它需要多少字节
+// Value 使用Len来计算它需要多少字节
 type Value interface {
 	Len() int
 }
 
-// 创建新的缓存结构体
+// New 创建新的缓存结构体
 func New(maxBytes int64, OnEvicted func(key string, value Value)) *Cache {
 	return &Cache{
 		maxBytes:  maxBytes,
@@ -32,7 +32,7 @@ func New(maxBytes int64, OnEvicted func(key string, value Value)) *Cache {
 	}
 }
 
-// 获取查找键的值
+// Get 获取查找键的值
 func (c *Cache) Get(key string) (value Value, ok bool) {
 	if element, ok := c.cache[key]; ok {
 		// 将此元素移至双端链表的头部
@@ -44,7 +44,7 @@ func (c *Cache) Get(key string) (value Value, ok bool) {
 
 }
 
-// 这里的删除，实际上是缓存淘汰。即移除最近最少访问的节点（队尾）
+// RemoveOldest 这里的删除，实际上是缓存淘汰。即移除最近最少访问的节点（队尾）
 func (c *Cache) RemoveOldest() bool {
 	// 获取双端链表的尾部元素
 	element := c.ll.Back()
@@ -60,7 +60,7 @@ func (c *Cache) RemoveOldest() bool {
 	return true
 }
 
-// 新增或更新
+// Add 新增或更新
 func (c *Cache) Add(key string, value Value) {
 
 	// 如果存在则更新节点的值
@@ -87,8 +87,7 @@ func (c *Cache) Add(key string, value Value) {
 	}
 }
 
-
-// 获取元素个数
+// Len 获取元素个数
 func (c *Cache) Len() int {
 	return c.ll.Len()
 }
